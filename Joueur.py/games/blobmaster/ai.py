@@ -117,13 +117,7 @@ class AI(BaseAI):
         blobmaster = self.player.blobmaster
         enemy_largest_slime = self.enemy_largest_slime()
         if enemy_largest_slime and enemy_largest_slime.size > 1:
-            delta_to_center = math.sqrt(enemy_largest_slime.size)/2
-            target_tile = enemy_largest_slime.tile
-            for i in delta_to_center:
-                target_tile = target_tile._tile_south
-                target_tile = target_tile._tile_west
-
-            return target_tile
+            return self.get_blob_center_tile(enemy_largest_slime)
 
         tentative_drop = None
         for neighbour in blobmaster.tile.get_neighbors():
@@ -131,7 +125,16 @@ class AI(BaseAI):
                 tentative_drop=neighbour
             if self.calculate_tile_value(neighbour) > self.calculate_tile_value(tentative_drop):
                 tentative_drop=neighbour
-        return tentative_drop
+        if tentative_drop.blob:
+            return self.get_blob_center_tile(tentative_drop.blob)
+        else:
+            return tentative_drop
+
+    def get_blob_center_tile(self, blob):
+        center_tile = blob.tile
+        dist_from_center = int(math.sqrt(blob.size) // 2)
+        return self.game.get_tile_at(center_tile.x - dist_from_center, center_tile.y - dist_from_center)
+
 
     def calculate_tile_value(self, tile):
         """ If enemy has blob larger than 1x1, drop there
@@ -145,10 +148,13 @@ class AI(BaseAI):
         """
         blobmaster = self.player.blobmaster
         score = tile.slime
+        if tile.blob and tile.blob.size > 1:
+            score += tile.blob.size
+
         if tile.blob and tile.blob.owner == self.player.opponent:
             score += 15
         elif tile.blob and tile.blob.owner == None:
-            score +=10
+            score += 10
         elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
             # tile is own blob and adjacent to blobmaster
             score = -100
