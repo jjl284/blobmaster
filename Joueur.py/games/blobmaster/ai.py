@@ -18,6 +18,17 @@ def dist(tile_1, tile_2):
         "L_inf": L_inf,
     }
 
+def all_paths_2(tile):
+    """Find all legal paths of length 2, sorted by slime amount"""
+    paths = []
+    for u in [tile.tile_north, tile.tile_south, tile.tile_east, tile.tile_west]:
+        if u and not u.blob:
+            for v in [u.tile_north, u.tile_south, u.tile_east, u.tile_west]:
+                if v and not v.blob:
+                    paths.append((u, v, u.slime + v.slime))
+    return sorted(paths, key=lambda p : p[2], reverse=True)
+
+
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Blobmaster. """
 
@@ -55,16 +66,11 @@ class AI(BaseAI):
         # This is a basic AI that moves its blobmaster around and drops blobs randomly
         # Replace this code with your own!
 
-        active_blob = None
-        for blob in self.player.blobs:
-            if blob.moves_left>0:
-                active_blob=blob
-                blobmaster = self.player.blobmaster
-                opponent_pos = self.player.opponent.blobmaster.tile
-                neighbors = blobmaster.tile.get_neighbors()
-                destination = random.choice(neighbors)
-                if not destination.blob():
-                    blobmaster.move(destination)
+        blobmaster = self.player.blobmaster
+        neighbors = blobmaster.tile.get_neighbors()
+        paths = all_paths_2(blobmaster.tile)
+        blobmaster.move(paths[0][0])
+        blobmaster.move(paths[0][1])
 
         dropzone = random.choice(self.game.tiles)
         self.player.drop(dropzone)
