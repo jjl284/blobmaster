@@ -134,11 +134,15 @@ class AI(BaseAI):
 
             TODO: other factors e.g. distance from blobmaster, locations of other slime, ability to capture
         """
+        blobmaster = self.player.blobmaster
         score = tile.slime
         if tile.blob and tile.blob.owner == self.player.opponent:
             score += 15
-        elif tile.blob:
+        elif tile.blob and tile.blob.owner == None:
             score +=10
+        elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
+            # tile is own blob and adjacent to blobmaster
+            score = 0
         return score
 
     def start(self):
