@@ -94,7 +94,7 @@ class AI(BaseAI):
         priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
 
         if priority_drop_list:
-            dropzone = next(priority_drop_list)
+            dropzone = priority_drop_list[0]
             self.player.drop(dropzone)
         else:
             dropzone = self.determine_drop_location()
