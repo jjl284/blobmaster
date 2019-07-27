@@ -89,7 +89,7 @@ class AI(BaseAI):
                 m[0].move(m[1])
                 m[0].move(m[2])
 
-        neutral_blob_tiles = self.get_neighboring_blob_tiles(blobmaster)
+        neutral_blob_tiles = self.get_neighboring_neutral_blob_tiles(blobmaster)
         enemy_blob_tiles = self.get_neighboring_enemy_blob_tiles(blobmaster)
         priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
 
@@ -162,6 +162,13 @@ class AI(BaseAI):
         Empty list if no neutral blobs around.
         """
         return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+
+    def get_neighboring_neutral_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner is None]
 
     def get_neighboring_enemy_blob_tiles(self, blob):
         return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner == self.player.opponent]
