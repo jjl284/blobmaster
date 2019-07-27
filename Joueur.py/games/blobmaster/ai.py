@@ -18,17 +18,6 @@ def dist(tile_1, tile_2):
         "L_inf": L_inf,
     }
 
-def all_paths_2(blob):
-    """Find all legal paths of length 2, sorted by slime amount"""
-    paths = []
-    for u in blob.tile.get_neighbors():
-        if u and not u.blob:
-            for v in u.get_neighbors():
-                if v and not v.blob:
-                    paths.append((blob, u, v, u.slime + v.slime))
-    return sorted(paths, key=lambda p : p[3], reverse=True)
-
-
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Blobmaster. """
 
@@ -66,29 +55,18 @@ class AI(BaseAI):
 
         # Move blobmaster to thwart aggressive tactics
         blobmaster = self.player.blobmaster
-        paths = all_paths_2(blobmaster)
+        paths = self.all_paths_2(blobmaster, False)
         if paths:
             blobmaster.move(paths[0][1])
             blobmaster.move(paths[0][2])
 
         # Move rest of blobs
-        moves = []
-        n_moves = 20
         for blob in self.player.blobs:
             if blob.size == 1:
-                paths = all_paths_2(blob)
-                if paths:
-                    if paths[0][3] > 35 and n_moves > 0:
-                        paths[0][0].move(paths[0][1])
-                        paths[0][0].move(paths[0][2])
-                        n_moves -= 1
-                    else:
-                        moves.append(paths[0])
-        if n_moves > 0:
-            moves.sort(key=lambda p: p[3], reverse=True)
-            for m in moves[:n_moves]:
-                m[0].move(m[1])
-                m[0].move(m[2])
+                paths = self.all_paths_2(blob, int(blob.id) % 3 == 0)
+                if paths and self.player.time_remaining > 2 * 10**9:
+                    blob.move(paths[0][1])
+                    blob.move(paths[0][2])
 
         dropzone = self.determine_drop_location()
         self.player.drop(dropzone)
@@ -148,6 +126,22 @@ class AI(BaseAI):
             # tile is own blob and adjacent to blobmaster
             score = 0
         return score
+
+    def all_paths_2(self, blob, attack):
+        """Find all legal paths of length 2, sorted by slime amount (or attack range)"""
+        paths = []
+        for u in blob.tile.get_neighbors():
+            if u and not u.blob:
+                for v in u.get_neighbors():
+                    if v and not v.blob:
+                        if attack:
+                            enemy_pos = self.player.opponent.blobmaster.tile
+                            if v == enemy_pos:
+                                return []
+                            paths.append((blob, u, v, -dist(v, enemy_pos)["sum"]))
+                        else:
+                            paths.append((blob, u, v, u.slime + v.slime))
+        return sorted(paths, key=lambda p : p[3], reverse=True)
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
