@@ -62,15 +62,18 @@ class AI(BaseAI):
         Returns:
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
-        # This is a basic AI that moves its blobmaster around and drops blobs randomly
-        # Replace this code with your own!
 
+        # Move blobmaster to thwart aggressive tactics
         blobmaster = self.player.blobmaster
+        paths = all_paths_2(blobmaster)
+        if paths:
+            blobmaster.move(paths[0][1])
+            blobmaster.move(paths[0][2])
 
-        neighbors = blobmaster.tile.get_neighbors()
+        # Move rest of blobs
         moves = []
         n_moves = 20
-        for blob in [blobmaster] + self.player.blobs:
+        for blob in self.player.blobs:
             if blob.size == 1:
                 paths = all_paths_2(blob)
                 if paths:
@@ -93,10 +96,16 @@ class AI(BaseAI):
         if priority_drop_list:
             dropzone = next(priority_drop_list)
             self.player.drop(dropzone)
+        else:
+            dropzone = self.determine_drop_location()
+            self.player.drop(dropzone)
 
         return True
 
-    def position_of_enemy_largest_slime(self):
+    def enemy_largest_slime(self):
+        """
+            Returns enemy's largest blob (if tie, returns closest to our blobmaster)
+        """
         blobmaster = self.player.blobmaster
         biggest_blob = None
         for blob in self.player.opponent.blobs:
@@ -104,11 +113,48 @@ class AI(BaseAI):
                 biggest_blob=blob
             elif blob.size > biggest_blob.size:
                 biggest_blob=blob
-            elif blob.size==biggest_blob.size and dist(blobmaster.tile,blob.tile)<dist(blobmaster.tile,biggest_blob.tile):
+            # if two enemy blobs are same size, choose the closer one
+            elif blob.size==biggest_blob.size and dist(blobmaster.tile,blob.tile)["sum"]<dist(blobmaster.tile,biggest_blob.tile)["sum"]:
                 biggest_blob=blob
-        if not biggest_blob:
-            return random.choice(self.game.tiles)
-        return biggest_blob.tile
+        return biggest_blob
+
+    def determine_drop_location(self):
+        """ If enemy has blob larger than 1x1, drop there
+            Otherwise, drop adjacent to blobmaster (preference for squares that have an enemy blob, then neutral
+        """
+        blobmaster = self.player.blobmaster
+        enemy_largest_slime = self.enemy_largest_slime()
+        if enemy_largest_slime and enemy_largest_slime.size > 1:
+            return enemy_largest_slime.tile
+
+        tentative_drop = None
+        for neighbour in blobmaster.tile.get_neighbors():
+            if not tentative_drop:
+                tentative_drop=neighbour
+            if self.calculate_tile_value(neighbour) > self.calculate_tile_value(tentative_drop):
+                tentative_drop=neighbour
+        return tentative_drop
+
+    def calculate_tile_value(self, tile):
+        """ If enemy has blob larger than 1x1, drop there
+            Otherwise, drop adjacent to blobmaster (preference for squares that have an enemy blob, then neutral
+
+            Priority calculation = amount of slime
+            + 15 if enemy blob is on
+            + 10 if neutral blob
+
+            TODO: other factors e.g. distance from blobmaster, locations of other slime, ability to capture
+        """
+        blobmaster = self.player.blobmaster
+        score = tile.slime
+        if tile.blob and tile.blob.owner == self.player.opponent:
+            score += 15
+        elif tile.blob and tile.blob.owner == None:
+            score +=10
+        elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
+            # tile is own blob and adjacent to blobmaster
+            score = 0
+        return score
 
     def get_neighboring_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
