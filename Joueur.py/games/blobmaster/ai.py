@@ -21,9 +21,9 @@ def dist(tile_1, tile_2):
 def all_paths_2(tile):
     """Find all legal paths of length 2, sorted by slime amount"""
     paths = []
-    for u in [tile.tile_north, tile.tile_south, tile.tile_east, tile.tile_west]:
+    for u in tile.get_neighbors():
         if u and not u.blob:
-            for v in [u.tile_north, u.tile_south, u.tile_east, u.tile_west]:
+            for v in u.get_neighbors():
                 if v and not v.blob:
                     paths.append((u, v, u.slime + v.slime))
     return sorted(paths, key=lambda p : p[2], reverse=True)
