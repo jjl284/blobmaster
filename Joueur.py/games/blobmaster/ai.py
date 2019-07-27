@@ -56,7 +56,7 @@ class AI(BaseAI):
         # Replace this code with your own!
 
         blobmaster = self.player.blobmaster
-	opponent_pos = self.player.opponent.blobmaster.tile
+        opponent_pos = self.player.opponent.blobmaster.tile
         neighbors = blobmaster.tile.get_neighbors()
         blobmaster.move(random.choice(neighbors))
 
