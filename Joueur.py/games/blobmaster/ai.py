@@ -71,6 +71,12 @@ class AI(BaseAI):
         paths = all_paths_2(blobmaster.tile)
         blobmaster.move(paths[0][0])
         blobmaster.move(paths[0][1])
+        for blob in self.player.blobs:
+            if blob.size == 1:
+                paths = all_paths_2(blob.tile)
+                if paths[0][2] > 20:
+                    blob.move(paths[0][0])
+                    blob.move(paths[0][1])
 
         dropzone = random.choice(self.game.tiles)
         self.player.drop(dropzone)
