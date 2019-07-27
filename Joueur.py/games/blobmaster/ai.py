@@ -18,15 +18,15 @@ def dist(tile_1, tile_2):
         "L_inf": L_inf,
     }
 
-def all_paths_2(tile):
+def all_paths_2(blob):
     """Find all legal paths of length 2, sorted by slime amount"""
     paths = []
-    for u in [tile.tile_north, tile.tile_south, tile.tile_east, tile.tile_west]:
+    for u in blob.tile.get_neighbors():
         if u and not u.blob:
-            for v in [u.tile_north, u.tile_south, u.tile_east, u.tile_west]:
+            for v in u.get_neighbors():
                 if v and not v.blob:
-                    paths.append((u, v, u.slime + v.slime))
-    return sorted(paths, key=lambda p : p[2], reverse=True)
+                    paths.append((blob, u, v, u.slime + v.slime))
+    return sorted(paths, key=lambda p : p[3], reverse=True)
 
 
 class AI(BaseAI):
@@ -68,9 +68,23 @@ class AI(BaseAI):
 
         blobmaster = self.player.blobmaster
         neighbors = blobmaster.tile.get_neighbors()
-        paths = all_paths_2(blobmaster.tile)
-        blobmaster.move(paths[0][0])
-        blobmaster.move(paths[0][1])
+        moves = []
+        n_moves = 20
+        for blob in [blobmaster] + self.player.blobs:
+            if blob.size == 1:
+                paths = all_paths_2(blob)
+                if paths:
+                    if paths[0][3] > 35 and n_moves > 0:
+                        paths[0][0].move(paths[0][1])
+                        paths[0][0].move(paths[0][2])
+                        n_moves -= 1
+                    else:
+                        moves.append(paths[0])
+        if n_moves > 0:
+            moves.sort(key=lambda p: p[3], reverse=True)
+            for m in moves[:n_moves]:
+                m[0].move(m[1])
+                m[0].move(m[2])
 
         dropzone = self.determine_drop_location()
         self.player.drop(dropzone)
