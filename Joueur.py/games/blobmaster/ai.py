@@ -89,16 +89,8 @@ class AI(BaseAI):
                 m[0].move(m[1])
                 m[0].move(m[2])
 
-        neutral_blob_tiles = self.get_neighboring_neutral_blob_tiles(blobmaster)
-        enemy_blob_tiles = self.get_neighboring_enemy_blob_tiles(blobmaster)
-        priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
-
-        if priority_drop_list:
-            dropzone = priority_drop_list[0]
-            self.player.drop(dropzone)
-        else:
-            dropzone = self.determine_drop_location()
-            self.player.drop(dropzone)
+        dropzone = self.determine_drop_location()
+        self.player.drop(dropzone)
 
         return True
 
@@ -171,6 +163,8 @@ class AI(BaseAI):
         return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner is None]
 
     def get_neighboring_enemy_blob_tiles(self, blob):
+        """ Return a list of tiles with enemy blobs.
+        """
         return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner == self.player.opponent]
 
 
