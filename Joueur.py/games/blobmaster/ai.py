@@ -4,6 +4,19 @@ from joueur.base_ai import BaseAI
 
 # you can add additional import(s) here
 import random
+import math
+
+def dist(tile_1, tile_2):
+    x_dist = abs(tile_1.x - tile_2.x)
+    y_dist = abs(tile_1.y - tile_2.y)
+    manhattan = x_dist + y_dist
+    L_inf = max(x_dist, y_dist)
+    return {
+        "x": x_dist,
+        "y": y_dist,
+        "sum": manhattan,
+        "L_inf": L_inf,
+    }
 
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Blobmaster. """
@@ -31,7 +44,7 @@ class AI(BaseAI):
         Returns
             str: The name of your Player.
         """
-        return "BlobMaster" # REPLACE THIS WITH YOUR TEAM NAME
+        return "BlobMaster"
 
     def run_turn(self):
         """ This is called every time it is this AI.player's turn.
@@ -43,6 +56,7 @@ class AI(BaseAI):
         # Replace this code with your own!
 
         blobmaster = self.player.blobmaster
+	opponent_pos = self.player.opponent.blobmaster.tile
         neighbors = blobmaster.tile.get_neighbors()
         blobmaster.move(random.choice(neighbors))
 
