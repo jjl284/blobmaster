@@ -72,8 +72,10 @@ class AI(BaseAI):
             if blob.size == 1:
                 paths = self.all_paths_2(blob, int(blob.id) % 3 == 0)
                 if paths and self.player.time_remaining > 2 * 10**9:
-                    blob.move(paths[0][1])
-                    blob.move(paths[0][2])
+                    if paths[0][1]:
+                        blob.move(paths[0][1])
+                        if paths[0][2]:
+                            blob.move(paths[0][2])
 
         dropzone = self.determine_drop_location()
         self.player.drop(dropzone)
@@ -154,7 +156,7 @@ class AI(BaseAI):
             paths.append((blob, None, None, dist(blob.tile, enemy_pos)["attack"]))
         for u in blob.tile.get_neighbors():
             if attack:
-                paths.append((blob, u, u, dist(u, enemy_pos)["attack"]))
+                paths.append((blob, u, None, dist(u, enemy_pos)["attack"]))
             if u and not u.blob:
                 for v in u.get_neighbors():
                     if v and not v.blob:
