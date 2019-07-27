@@ -64,9 +64,8 @@ class AI(BaseAI):
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
 
-        blobmaster = self.player.blobmaster
-
         # Move blobmaster to thwart aggressive tactics
+        blobmaster = self.player.blobmaster
         paths = all_paths_2(blobmaster)
         if paths:
             blobmaster.move(paths[0][1])
@@ -75,7 +74,7 @@ class AI(BaseAI):
         # Move rest of blobs
         moves = []
         n_moves = 20
-        for blob in [blobmaster] + self.player.blobs:
+        for blob in self.player.blobs:
             if blob.size == 1:
                 paths = all_paths_2(blob)
                 if paths:
