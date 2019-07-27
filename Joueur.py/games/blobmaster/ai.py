@@ -31,7 +31,7 @@ class AI(BaseAI):
         Returns
             str: The name of your Player.
         """
-        return "Blobmaster Python Player" # REPLACE THIS WITH YOUR TEAM NAME
+        return "BlobMaster" # REPLACE THIS WITH YOUR TEAM NAME
 
     def run_turn(self):
         """ This is called every time it is this AI.player's turn.
