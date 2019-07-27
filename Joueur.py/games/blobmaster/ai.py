@@ -63,11 +63,16 @@ class AI(BaseAI):
         Returns:
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
-        # This is a basic AI that moves its blobmaster around and drops blobs randomly
-        # Replace this code with your own!
 
         blobmaster = self.player.blobmaster
-        neighbors = blobmaster.tile.get_neighbors()
+
+        # Move blobmaster to thwart aggressive tactics
+        paths = all_paths_2(blobmaster)
+        if paths:
+            blobmaster.move(paths[0][1])
+            blobmaster.move(paths[0][2])
+
+        # Move rest of blobs
         moves = []
         n_moves = 20
         for blob in [blobmaster] + self.player.blobs:
