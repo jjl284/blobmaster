@@ -164,7 +164,7 @@ class AI(BaseAI):
         return [tile for tile in blob.tile.get_neighbors() if tile.blob]
 
     def get_neighboring_enemy_blob_tiles(self, blob):
-        return [tile for tile in blob.get_neighboring_blob_tiles() if tile.blob.owner == self.player.opponent]
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner == self.player.opponent]
 
 
 
