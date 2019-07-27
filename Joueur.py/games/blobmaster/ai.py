@@ -15,6 +15,7 @@ def dist(tile_1, tile_2):
         "x": x_dist,
         "y": y_dist,
         "sum": manhattan,
+        "attack": manhattan == 0 and -99 or -manhattan,
         "L_inf": L_inf,
     }
 
@@ -52,6 +53,12 @@ class AI(BaseAI):
         Returns:
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
+
+        if not self._target_blob or self._target_blob == self.player.blobmaster or self._target_blob.owner == self.player:
+            if self.player.opponent.blobs:
+                self._target_blob = random.choice(self.player.opponent.blobs)
+            else:
+                self._target_blob = self.player.blobmaster
 
         # Move blobmaster to thwart aggressive tactics
         blobmaster = self.player.blobmaster
@@ -144,15 +151,17 @@ class AI(BaseAI):
     def all_paths_2(self, blob, attack):
         """Find all legal paths of length 2, sorted by slime amount (or attack range)"""
         paths = []
+        enemy_pos = self._target_blob.tile
+        if attack:
+            paths.append((blob, None, None, dist(blob.tile, enemy_pos)["attack"]))
         for u in blob.tile.get_neighbors():
+            if attack:
+                paths.append((blob, u, u, dist(u, enemy_pos)["attack"]))
             if u and not u.blob:
                 for v in u.get_neighbors():
                     if v and not v.blob:
                         if attack:
-                            enemy_pos = self.player.opponent.blobmaster.tile
-                            if v == enemy_pos:
-                                return []
-                            paths.append((blob, u, v, -dist(v, enemy_pos)["sum"]))
+                            paths.append((blob, u, v, dist(v, enemy_pos)["attack"]))
                         else:
                             paths.append((blob, u, v, u.slime + v.slime))
         return sorted(paths, key=lambda p : p[3], reverse=True)
@@ -179,6 +188,7 @@ class AI(BaseAI):
             game. You can initialize your AI here.
         """
         # replace with your start logic
+        self._target_blob = None
 
     def game_updated(self):
         """ This is called every time the game's state updates, so if you are
