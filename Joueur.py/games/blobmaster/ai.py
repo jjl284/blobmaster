@@ -28,7 +28,6 @@ def all_paths_2(blob):
                     paths.append((blob, u, v, u.slime + v.slime))
     return sorted(paths, key=lambda p : p[3], reverse=True)
 
-
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Blobmaster. """
 
@@ -64,9 +63,8 @@ class AI(BaseAI):
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
 
-        blobmaster = self.player.blobmaster
-
         # Move blobmaster to thwart aggressive tactics
+        blobmaster = self.player.blobmaster
         paths = all_paths_2(blobmaster)
         if paths:
             blobmaster.move(paths[0][1])
@@ -75,7 +73,7 @@ class AI(BaseAI):
         # Move rest of blobs
         moves = []
         n_moves = 20
-        for blob in [blobmaster] + self.player.blobs:
+        for blob in self.player.blobs:
             if blob.size == 1:
                 paths = all_paths_2(blob)
                 if paths:
@@ -91,8 +89,16 @@ class AI(BaseAI):
                 m[0].move(m[1])
                 m[0].move(m[2])
 
-        dropzone = self.determine_drop_location()
-        self.player.drop(dropzone)
+        neutral_blob_tiles = self.get_neighboring_neutral_blob_tiles(blobmaster)
+        enemy_blob_tiles = self.get_neighboring_enemy_blob_tiles(blobmaster)
+        priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
+
+        if priority_drop_list:
+            dropzone = priority_drop_list[0]
+            self.player.drop(dropzone)
+        else:
+            dropzone = self.determine_drop_location()
+            self.player.drop(dropzone)
 
         return True
 
@@ -155,6 +161,25 @@ class AI(BaseAI):
             # tile is own blob and adjacent to blobmaster
             score = -100
         return score
+
+    def get_neighboring_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+
+    def get_neighboring_neutral_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner is None]
+
+    def get_neighboring_enemy_blob_tiles(self, blob):
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner == self.player.opponent]
+
+
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
