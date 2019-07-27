@@ -111,13 +111,19 @@ class AI(BaseAI):
         return biggest_blob
 
     def determine_drop_location(self):
-        """ If enemy has blob larger than 1x1, drop there
+        """ If enemy has blob larger than 1x1, drop in the center
             Otherwise, drop adjacent to blobmaster (preference for squares that have an enemy blob, then neutral
         """
         blobmaster = self.player.blobmaster
         enemy_largest_slime = self.enemy_largest_slime()
         if enemy_largest_slime and enemy_largest_slime.size > 1:
-            return enemy_largest_slime.tile
+            delta_to_center = math.sqrt(enemy_largest_slime.size)/2
+            target_tile = enemy_largest_slime.tile
+            for i in delta_to_center:
+                target_tile = target_tile._tile_south
+                target_tile = target_tile._tile_west
+
+            return target_tile
 
         tentative_drop = None
         for neighbour in blobmaster.tile.get_neighbors():
@@ -145,7 +151,7 @@ class AI(BaseAI):
             score +=10
         elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
             # tile is own blob and adjacent to blobmaster
-            score = 0
+            score = -100
         return score
 
     def get_neighboring_blob_tiles(self, blob):
