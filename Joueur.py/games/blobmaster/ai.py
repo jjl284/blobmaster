@@ -44,7 +44,7 @@ class AI(BaseAI):
         Returns
             str: The name of your Player.
         """
-        return "BlobMaster"
+        return "Team DJS"
 
     def run_turn(self):
         """ This is called every time it is this AI.player's turn.
@@ -55,15 +55,35 @@ class AI(BaseAI):
         # This is a basic AI that moves its blobmaster around and drops blobs randomly
         # Replace this code with your own!
 
-        blobmaster = self.player.blobmaster
-        opponent_pos = self.player.opponent.blobmaster.tile
-        neighbors = blobmaster.tile.get_neighbors()
-        blobmaster.move(random.choice(neighbors))
+        active_blob = None
+        for blob in self.player.blobs:
+            if blob.moves_left>0:
+                active_blob=blob
+                blobmaster = self.player.blobmaster
+                opponent_pos = self.player.opponent.blobmaster.tile
+                neighbors = blobmaster.tile.get_neighbors()
+                destination = random.choice(neighbors)
+                if not destination.blob():
+                    blobmaster.move(destination)
 
         dropzone = random.choice(self.game.tiles)
         self.player.drop(dropzone)
 
         return True
+
+    def position_of_enemy_largest_slime(self):
+        blobmaster = self.player.blobmaster
+        biggest_blob = None
+        for blob in self.player.opponent.blobs:
+            if not biggest_blob:
+                biggest_blob=blob
+            elif blob.size > biggest_blob.size:
+                biggest_blob=blob
+            elif blob.size==biggest_blob.size and dist(blobmaster.tile,blob.tile)<dist(blobmaster.tile,biggest_blob.tile):
+                biggest_blob=blob
+        if not biggest_blob:
+            return random.choice(self.game.tiles)
+        return biggest_blob.tile
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
