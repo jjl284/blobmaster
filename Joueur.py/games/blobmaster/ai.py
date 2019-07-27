@@ -68,8 +68,16 @@ class AI(BaseAI):
                     blob.move(paths[0][1])
                     blob.move(paths[0][2])
 
-        dropzone = self.determine_drop_location()
-        self.player.drop(dropzone)
+        neutral_blob_tiles = self.get_neighboring_neutral_blob_tiles(blobmaster)
+        enemy_blob_tiles = self.get_neighboring_enemy_blob_tiles(blobmaster)
+        priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
+
+        if priority_drop_list:
+            dropzone = priority_drop_list[0]
+            self.player.drop(dropzone)
+        else:
+            dropzone = self.determine_drop_location()
+            self.player.drop(dropzone)
 
         return True
 
@@ -90,13 +98,19 @@ class AI(BaseAI):
         return biggest_blob
 
     def determine_drop_location(self):
-        """ If enemy has blob larger than 1x1, drop there
+        """ If enemy has blob larger than 1x1, drop in the center
             Otherwise, drop adjacent to blobmaster (preference for squares that have an enemy blob, then neutral
         """
         blobmaster = self.player.blobmaster
         enemy_largest_slime = self.enemy_largest_slime()
         if enemy_largest_slime and enemy_largest_slime.size > 1:
-            return enemy_largest_slime.tile
+            delta_to_center = math.sqrt(enemy_largest_slime.size)/2
+            target_tile = enemy_largest_slime.tile
+            for i in delta_to_center:
+                target_tile = target_tile._tile_south
+                target_tile = target_tile._tile_west
+
+            return target_tile
 
         tentative_drop = None
         for neighbour in blobmaster.tile.get_neighbors():
@@ -124,7 +138,7 @@ class AI(BaseAI):
             score +=10
         elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
             # tile is own blob and adjacent to blobmaster
-            score = 0
+            score = -100
         return score
 
     def all_paths_2(self, blob, attack):
@@ -142,6 +156,23 @@ class AI(BaseAI):
                         else:
                             paths.append((blob, u, v, u.slime + v.slime))
         return sorted(paths, key=lambda p : p[3], reverse=True)
+
+    def get_neighboring_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+
+    def get_neighboring_neutral_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner is None]
+
+    def get_neighboring_enemy_blob_tiles(self, blob):
+        return [tile for tile in self.get_neighboring_blob_tiles(blob) if tile.blob.owner == self.player.opponent]
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
