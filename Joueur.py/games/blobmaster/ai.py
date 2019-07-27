@@ -122,8 +122,8 @@ class AI(BaseAI):
 
     def get_blob_center_tile(self, blob):
         center_tile = blob.tile
-        dist_from_center = int(math.sqrt(blob.size)//2)
-        return self.game.get_tile_at(center_tile.x - dist_from_center, center_tile.y - dist_from_center)
+        dist_from_center = int(blob.size//2)
+        return self.game.get_tile_at(center_tile.x + dist_from_center, center_tile.y + dist_from_center)
 
 
     def calculate_tile_value(self, tile):
