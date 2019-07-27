@@ -28,7 +28,6 @@ def all_paths_2(blob):
                     paths.append((blob, u, v, u.slime + v.slime))
     return sorted(paths, key=lambda p : p[3], reverse=True)
 
-
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Blobmaster. """
 
@@ -67,6 +66,7 @@ class AI(BaseAI):
         # Replace this code with your own!
 
         blobmaster = self.player.blobmaster
+
         neighbors = blobmaster.tile.get_neighbors()
         moves = []
         n_moves = 20
@@ -86,8 +86,13 @@ class AI(BaseAI):
                 m[0].move(m[1])
                 m[0].move(m[2])
 
-        dropzone = random.choice(self.game.tiles)
-        self.player.drop(dropzone)
+        neutral_blob_tiles = self.get_neighboring_blob_tiles(blobmaster)
+        enemy_blob_tiles = self.get_neighboring_enemy_blob_tiles(blobmaster)
+        priority_drop_list = enemy_blob_tiles + neutral_blob_tiles
+
+        if priority_drop_list:
+            dropzone = next(priority_drop_list)
+            self.player.drop(dropzone)
 
         return True
 
@@ -104,6 +109,18 @@ class AI(BaseAI):
         if not biggest_blob:
             return random.choice(self.game.tiles)
         return biggest_blob.tile
+
+    def get_neighboring_blob_tiles(self, blob):
+        """ Return a list of tiles with neutral blobs.
+
+        Empty list if no neutral blobs around.
+        """
+        return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+
+    def get_neighboring_enemy_blob_tiles(self, blob):
+        return [tile for tile in blob.get_neighboring_blob_tiles() if tile.blob.owner == self.player.opponent]
+
+
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
