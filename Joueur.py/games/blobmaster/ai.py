@@ -166,7 +166,12 @@ class AI(BaseAI):
 
     def attack_move(self, blob):
         paths = []
-        target = random.choice(self._target_blob.tile.get_neighbors())
+        if not self._target_blob or not self._target_blob.tile:
+            # This should never happen, but I've been wrong before
+            return []
+        targets = self._target_blob.tile.get_neighbors()
+        target = targets[self._attack_direction % len(targets)]
+        self._attack_direction += 1
         mn = 100
         mn_path = []
         for u in blob.tile.get_neighbors():
@@ -208,6 +213,7 @@ class AI(BaseAI):
         """
         # replace with your start logic
         self._target_blob = None
+        self._attack_direction = 0
 
     def game_updated(self):
         """ This is called every time the game's state updates, so if you are
