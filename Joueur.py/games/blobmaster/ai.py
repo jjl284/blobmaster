@@ -171,7 +171,14 @@ class AI(BaseAI):
 
         Empty list if no neutral blobs around.
         """
-        return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+        neighboring_tiles = []
+        top_left_coord = (blob.tile.x - 1, blob.tile.y -1)
+        for i in [0, blob.size+2]:
+            for j in range(blob.size+2):
+                neighboring_tiles.append(self.game.get_tile_at(top_left_coord[0] + i, top_left_coord[1] + j))
+                neighboring_tiles.append(self.game.get_tile_at(top_left_coord[0] + j, top_left_coord[1] + i))
+
+        return [tile for tile in neighboring_tiles if tile]
 
     def get_neighboring_neutral_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
