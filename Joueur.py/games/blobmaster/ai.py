@@ -15,7 +15,6 @@ def dist(tile_1, tile_2):
         "x": x_dist,
         "y": y_dist,
         "sum": manhattan,
-        "attack": manhattan == 0 and -99 or -manhattan,
         "L_inf": L_inf,
     }
 
@@ -54,15 +53,17 @@ class AI(BaseAI):
             bool: Represents if you want to end your turn. True means end your turn, False means to keep your turn going and re-call this function.
         """
 
-        if not self._target_blob or self._target_blob == self.player.blobmaster or self._target_blob.owner == self.player:
-            if self.player.opponent.blobs:
-                self._target_blob = random.choice(self.player.opponent.blobs)
+        if not self._target_blob or self._target_blob == self.player.opponent.blobmaster or self._target_blob.owner == self.player:
+            for b in self.player.opponent.blobs:
+                if b.size == 1:
+                    self._target_blob = b
+                    break
             else:
-                self._target_blob = self.player.blobmaster
+                self._target_blob = self.player.opponent.blobmaster
 
         # Move blobmaster to thwart aggressive tactics
         blobmaster = self.player.blobmaster
-        paths = self.all_paths_2(blobmaster, False)
+        paths = self.all_paths_2(blobmaster)
         if paths:
             blobmaster.move(paths[0][1])
             blobmaster.move(paths[0][2])
@@ -70,12 +71,17 @@ class AI(BaseAI):
         # Move rest of blobs
         for blob in self.player.blobs:
             if blob.size == 1:
-                paths = self.all_paths_2(blob, int(blob.id) % 3 == 0)
-                if paths and self.player.time_remaining > 2 * 10**9:
-                    if paths[0][1]:
+                if int(blob.id) % 3 == 0:
+                    # Attack blobs
+                    move = self.attack_move(blob)
+                    for t in move:
+                        blob.move(t)
+                else:
+                    # Slime collectors
+                    paths = self.all_paths_2(blob)
+                    if paths and self.player.time_remaining > 2 * 10**9:
                         blob.move(paths[0][1])
-                        if paths[0][2]:
-                            blob.move(paths[0][2])
+                        blob.move(paths[0][2])
 
         dropzone = self.determine_drop_location()
         self.player.drop(dropzone)
@@ -107,7 +113,7 @@ class AI(BaseAI):
         if enemy_largest_slime and enemy_largest_slime.size > 1:
             return self.get_blob_center_tile(enemy_largest_slime)
 
-        neutral_blob_tiles = [blob.tile for blob in self.game.blobs if not blob.owner]
+        neutral_blob_tiles = [blob.tile for blob in self.game.blobs if not blob.owner and not blob.is_dead]
 
         tentative_drop = None
         for neighbour in blobmaster.tile.get_neighbors() + neutral_blob_tiles:
@@ -148,23 +154,34 @@ class AI(BaseAI):
             score = -100
         return score
 
-    def all_paths_2(self, blob, attack):
+    def all_paths_2(self, blob):
         """Find all legal paths of length 2, sorted by slime amount (or attack range)"""
         paths = []
-        enemy_pos = self._target_blob.tile
-        if attack:
-            paths.append((blob, None, None, dist(blob.tile, enemy_pos)["attack"]))
         for u in blob.tile.get_neighbors():
-            if attack:
-                paths.append((blob, u, None, dist(u, enemy_pos)["attack"]))
             if u and not u.blob:
                 for v in u.get_neighbors():
                     if v and not v.blob:
-                        if attack:
-                            paths.append((blob, u, v, dist(v, enemy_pos)["attack"]))
-                        else:
-                            paths.append((blob, u, v, u.slime + v.slime))
+                        paths.append((blob, u, v, u.slime + v.slime))
         return sorted(paths, key=lambda p : p[3], reverse=True)
+
+    def attack_move(self, blob):
+        paths = []
+        target = random.choice(self._target_blob.tile.get_neighbors())
+        mn = 100
+        mn_path = []
+        for u in blob.tile.get_neighbors():
+            if u == self._target_blob.tile:
+                return []
+            if u and not u.blob:
+                for v in u.get_neighbors():
+                    if v == self._target_blob.tile:
+                        return [u]
+                    if v and not v.blob:
+                        d = dist(v, target)["sum"]
+                        if d < mn:
+                            mn = d
+                            mn_path = [u, v]
+        return mn_path
 
     def get_neighboring_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
