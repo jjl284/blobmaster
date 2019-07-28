@@ -116,7 +116,7 @@ class AI(BaseAI):
         neutral_blob_tiles = [blob.tile for blob in self.game.blobs if not blob.owner and not blob.is_dead]
 
         tentative_drop = None
-        for neighbour in blobmaster.tile.get_neighbors() + neutral_blob_tiles:
+        for neighbour in blobmaster.tile.get_neighbors() + neutral_blob_tiles + self.get_own_blobs_2_away_from_blobmaster():
             if not tentative_drop:
                 tentative_drop = neighbour
             if self.calculate_tile_value(neighbour) > self.calculate_tile_value(tentative_drop):
@@ -152,6 +152,9 @@ class AI(BaseAI):
         elif tile.blob and tile.blob.owner == self.player and tile in blobmaster.tile.get_neighbors():
             # tile is own blob and adjacent to blobmaster
             score = -100
+        elif tile.blob and tile.blob.owner == self.player:
+            # tile is own blob and NOT adjacent to blobmaster
+            score = 10
         return score
 
     def all_paths_2(self, blob):
@@ -182,6 +185,29 @@ class AI(BaseAI):
                             mn = d
                             mn_path = [u, v]
         return mn_path
+
+    def can_expand(self, blob):
+        for tile in self.get_neighboring_blob_tiles(blob):
+            if tile.blob and tile.blob.owner==self.player.opponent:
+                return False
+            if tile.blob and not tile.blob.owner:
+                return False
+            if tile.blob and not self.player.blobmaster:
+                return False
+
+        return True
+
+    def get_own_blobs_2_away_from_blobmaster(self):
+        tiles = []
+        blobmaster_pos = self.player.blobmaster.tile
+        for i in [-2,0,2]:
+            for j in [-2,0,2]:
+                if not abs(i) == abs(j):
+                    tile_2_spaces_away = self.game.get_tile_at(i,j)
+                    if tile_2_spaces_away and tile_2_spaces_away.blob and tile_2_spaces_away.blob.owner==self.player:
+                        tiles.append(tile_2_spaces_away)
+        return tiles
+
 
     def get_neighboring_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
