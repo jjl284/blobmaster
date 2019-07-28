@@ -71,7 +71,16 @@ class AI(BaseAI):
         # Move rest of blobs
         for blob in self.player.blobs:
             if blob.size == 1:
-                if int(blob.id) % 3 == 0:
+                if blob.tile.drop_owner == self.player and blob.tile.drop_turns_left < 3:
+                    s, d, p = 0, None, blob.tile
+                    for t in blob.tile.get_neighbors():
+                        if t.slime > s:
+                            s = t.slime
+                            d = t
+                    if d:
+                        blob.move(d)
+                        blob.move(p)
+                elif int(blob.id) % 3 == 0:
                     # Attack blobs
                     move = self.attack_move(blob)
                     for t in move:
@@ -169,7 +178,12 @@ class AI(BaseAI):
 
     def attack_move(self, blob):
         paths = []
-        target = random.choice(self._target_blob.tile.get_neighbors())
+        if not self._target_blob or not self._target_blob.tile:
+            # This should never happen, but I've been wrong before
+            return []
+        targets = self._target_blob.tile.get_neighbors()
+        target = targets[self._attack_direction % len(targets)]
+        self._attack_direction += 1
         mn = 100
         mn_path = []
         for u in blob.tile.get_neighbors():
@@ -214,7 +228,14 @@ class AI(BaseAI):
 
         Empty list if no neutral blobs around.
         """
-        return [tile for tile in blob.tile.get_neighbors() if tile.blob]
+        neighboring_tiles = []
+        top_left_coord = (blob.tile.x - 1, blob.tile.y -1)
+        for i in [0, blob.size+2]:
+            for j in range(blob.size+2):
+                neighboring_tiles.append(self.game.get_tile_at(top_left_coord[0] + i, top_left_coord[1] + j))
+                neighboring_tiles.append(self.game.get_tile_at(top_left_coord[0] + j, top_left_coord[1] + i))
+
+        return [tile for tile in neighboring_tiles if tile]
 
     def get_neighboring_neutral_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
@@ -234,6 +255,7 @@ class AI(BaseAI):
         """
         # replace with your start logic
         self._target_blob = None
+        self._attack_direction = 0
 
     def game_updated(self):
         """ This is called every time the game's state updates, so if you are
