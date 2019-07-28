@@ -82,6 +82,20 @@ class AI(BaseAI):
                     if paths and self.player.time_remaining > 2 * 10**9:
                         blob.move(paths[0][1])
                         blob.move(paths[0][2])
+            else:
+                blob_tiles = self.get_all_tiles_for_blob(blob)
+                for tile in blob_tiles:
+                    if tile.drop_owner == self.player.opponent:
+                        max_l_dist = 0
+                        move_tile = None
+                        for neigh_tile in [blob.tile.tile_south,
+                                     blob.tile.tile_north,
+                                     blob.tile.tile_east,
+                                     blob.tile.tile_west]:
+                            if max_l_dist < dist(neigh_tile, tile)['L_inf']:
+                                max_l_dist = dist(neigh_tile, tile)['L_inf']
+                                move_tile = neigh_tile
+                        blob.move(move_tile)
 
         dropzone = self.determine_drop_location()
         self.player.drop(dropzone)
@@ -187,6 +201,15 @@ class AI(BaseAI):
                             mn = d
                             mn_path = [u, v]
         return mn_path
+
+    def get_all_tiles_for_blob(self, blob):
+        blob_tiles = []
+        topleft = blob.tile
+        for i in range(blob.size):
+            for j in range(blob.size):
+                blob_tiles.append(self.game.get_tile_at(topleft.x + i, topleft.y + j))
+
+        return blob_tiles
 
     def get_neighboring_blob_tiles(self, blob):
         """ Return a list of tiles with neutral blobs.
