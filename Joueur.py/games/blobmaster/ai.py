@@ -71,7 +71,16 @@ class AI(BaseAI):
         # Move rest of blobs
         for blob in self.player.blobs:
             if blob.size == 1:
-                if int(blob.id) % 3 == 0:
+                if blob.tile.drop_owner == self.player and blob.tile.drop_turns_left < 3:
+                    s, d, p = 0, None, blob.tile
+                    for t in blob.tile.get_neighbors():
+                        if t.slime > s:
+                            s = t.slime
+                            d = t
+                    if d:
+                        blob.move(d)
+                        blob.move(p)
+                elif int(blob.id) % 3 == 0:
                     # Attack blobs
                     move = self.attack_move(blob)
                     for t in move:
