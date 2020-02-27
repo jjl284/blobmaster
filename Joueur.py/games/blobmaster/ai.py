@@ -80,7 +80,7 @@ class AI(BaseAI):
                     if d:
                         blob.move(d)
                         blob.move(p)
-                elif int(blob.id) % 3 == 0:
+                elif int(blob.id) % 6 == 0:
                     # Attack blobs
                     move = self.attack_move(blob)
                     for t in move:
